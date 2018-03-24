@@ -8,6 +8,9 @@
 #include<stdio.h>
 #include<malloc.h>
 #include<stdlib.h>
+typedef char bool;
+#define true 1
+#define false 0
 
 #define LEN sizeof(node)
 
@@ -213,3 +216,141 @@ pnode ReverseList(pnode *phead)
         }
     }
 }
+
+//找到倒数第k个节点
+pnode  findRangeNode(pnode *phead, int k)
+{
+    if(k == 1 || *phead == NULL){
+        printf("输入不合法\n");
+        return NULL;
+    }
+
+    pnode pAhead;
+    pnode pBehind;
+    //前面的指针先跑到正向k节点
+    while(k > 1 && pAhead != NULL){
+        pAhead = pAhead->next;
+        k--;
+    }
+    if(k > 1 && pAhead == NULL) //节点个数小于K，返回null
+        return NULL; 
+    while(pAhead->next != NULL){ //前后两个指针一起向前走，直到前面的指针到达链表末尾
+        pAhead = pAhead->next;
+        pBehind = pBehind->next;
+    }
+    
+    return pBehind;
+}
+
+//查找单链表的中间节点
+pnode FindMidNode(pnode *phead)
+{
+    if(*phead == NULL || (*phead)->next == NULL)
+        return NULL;
+    //设置两个指针，同上一个api的实现思想一样
+    //不过pAhead一次走两步
+    pnode pAhead;
+    pnode pBehind;
+    while(pAhead->next != NULL){
+        pAhead = pAhead->next;
+        pBehind = pBehind->next;
+        if(pAhead->next != NULL){
+            pAhead = pAhead->next;
+        }
+    }
+    return pBehind;
+}
+
+
+//从尾到头打印链表
+//可以使用递归也可以使用栈的先进后出特性
+void PrintFromTail(pnode phead)
+{
+    if(phead == NULL){
+        return;
+    }else{
+        PrintFromTail((phead)->next);
+        printf("%d->", (phead)->data);
+    }
+    putchar(10);
+}
+
+//将两个有序链表合并成一个有序链表
+pnode MergeSortList(pnode phead1, pnode phead2)
+{
+    if(phead1 == NULL)
+        return phead2;
+    if(phead2 == NULL)
+        return phead1;
+    pnode ListMerge = NULL;
+    if(phead1->data < phead2->data){
+        ListMerge = phead1;
+        ListMerge->next == NULL;
+        phead1 = phead1->next;
+    }else{
+        ListMerge = phead2;
+        ListMerge->next = NULL;
+        phead2 = phead2->next;
+    }
+    
+    pnode pTemp = ListMerge;
+    while(phead1 != NULL && phead2 != NULL){
+        if(phead1->data < phead2->data){
+            pTemp->next = phead1;
+            phead1 = phead1->next;
+            pTemp = pTemp->next;
+            pTemp->next = NULL;
+        }else{
+            pTemp->next = phead2;
+            phead2 = phead2->next;
+            pTemp = pTemp->next;
+            pTemp->next = NULL;
+        }   
+    }
+    if(phead1 != NULL)
+        ListMerge->next = phead1;
+    if(phead2 != NULL)
+        ListMerge->next = phead2;
+
+    return ListMerge;
+}
+
+
+//合并两个有序链表成一个有序链表 
+pnode MergeByRecursion(pnode phead1, pnode phead2)
+{
+    if(phead1 == NULL)
+        return phead2;
+    if(phead2 == NULL)
+        return phead1;
+    pnode MergeList = NULL;
+    if(phead1->data < phead2->data){
+        MergeList = phead1;
+        MergeList->next = MergeSortList(phead1->next, phead2);
+    }else{
+        MergeList = phead2;
+        MergeList->next = MergeSortList(phead2, phead1->next);
+    }
+
+    return MergeList;
+}
+
+//判断两个链表是否相交
+//如果相交在交点以后的元素都相同，所以直比较末尾的节点是否相等，地址。
+bool IsIntersec(pnode phead1, pnode phead2)
+{
+    if(phead1 == NULL || phead2 == NULL)
+        return false;
+    pnode Tail1 = phead1;
+    while(Tail1->next != NULL){
+        Tail1 = Tail1->next;
+    }
+    pnode Tail2 = phead2;
+    while(Tail2->next != NULL){
+        Tail2 = Tail2->next;
+    }
+
+    return Tail1 == Tail2;
+}
+
+
