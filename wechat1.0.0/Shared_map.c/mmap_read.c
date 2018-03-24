@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
     }
 
     int fd;
-    fd = open(argv[1], O_RDWR);
+    fd = open(argv[1], O_RDWR| O_CREAT);
     if(fd == -1){
         ERR_EXIT("open");
     }

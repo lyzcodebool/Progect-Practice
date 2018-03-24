@@ -296,12 +296,17 @@ int list_common(session_t *sess)
 
 int port_active(session_t *sess)
 {
-    if(sess->port_addr)
+    if(sess->port_addr){
+        if(pasv_active(sess)){
+            fprintf(stderr, "botn port an pasv are active!\n");
+            exit(EXIT_FAILURE);
+        }
         return 1;
+    }
     return 0;
 }
 
-int posv_active(session_t *sess)
+int pasv_active(session_t *sess)
 {
     return 0;
 }
@@ -310,6 +315,7 @@ int get_transfer_fd(session_t *sess)
 {
     //检测是否收到post或者posv命令
     if(!port_active(sess) && !posv_active(sess)){
+        ftp_replay(sess, "Use port or pasv first.");
         return 0;
     }
 
