@@ -32,7 +32,6 @@ void *io_read_task(void *arg)
     activate_nonblock(*sockfd);
     char read_buff[BUFF_SIZE];
     int nread = 0;
-    int n = 0;
     /*
      *ET模式下的读写问题
      *1.对于读，只要buff中有数据就一直读

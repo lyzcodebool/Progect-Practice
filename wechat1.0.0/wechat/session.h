@@ -8,5 +8,5 @@
 #ifndef _SESSION_H
 #define _SESSION_H
 
-
+void main_thread_func(); 
 #endif
