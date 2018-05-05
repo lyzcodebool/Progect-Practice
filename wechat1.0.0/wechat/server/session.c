@@ -11,6 +11,7 @@
 #include"thread_pool.h"
 #include"dispatchertask.h"
 #include"condition.h"
+#include"mesgsrv.h"
 //程序运行整体模型
 unsigned short printf_info();
 void main_thread_func()

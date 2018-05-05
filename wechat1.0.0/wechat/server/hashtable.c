@@ -7,7 +7,7 @@
 
 #include<stdlib.h>
 #include<stdio.h>
-#include"hashtable.h"
+#include"../bin/hashtable.h"
 #include<string.h>
 
 void init_kv(struct kv* kv)

@@ -5,8 +5,8 @@
 	> Created Time: Mon 26 Feb 2018 10:34:07 PM PST
  ************************************************************************/
 
-#include"sysutil.h"
-#include"common.h"
+#include"../bin/sysutil.h"
+#include"../bin/common.h"
 void add_epoll_fd(int epollfd, int fd, bool oneshot)
 {
     struct epoll_event event;
@@ -393,7 +393,7 @@ ssize_t readline(int sockfd, void *buf, size_t maxline)
 {
     int ret;
     int nread;
-    char *bufp = buf;
+    char *bufp = (char *)buf;
     int nleft = maxline;
     while(1)
     {

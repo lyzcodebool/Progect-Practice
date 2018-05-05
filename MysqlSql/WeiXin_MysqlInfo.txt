@@ -1,0 +1,74 @@
+use WeiXinChat;
+
+/*user table */
+drop table if exists UserInfo;
+create table UserInfo
+(
+    userID bigint(20) AUTO_INCREMENT not NULL comment '用户自增id',
+    userNameID varchar(64) not NULL comment '用户自定义帐号',
+    userName varchar(64) not NULL comment '用户昵称',
+    userPasswd varchar(64) not NULL comment '用户密码',
+    userPhonenum varchar(60) default null comment '电话号码',
+    userRegisterTime DATETIME  NOT NULL comment '注册时间',
+    moreNote TINYTEXT default null comment '备注',
+    PRIMARY KEY(userID)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+/*red envelop table*/
+drop table if exists ReduserInfo;
+create table ReduserInfo
+(
+    redID bigint(20) AUTO_INCREMENT not NULL comment '红包自增id',
+    userID bigint(20) not NULL comment '用户id',
+    greetings varchar(64) default null comment '祝福语', 
+    redpackageType boolean default 1 comment '红包类型',
+    packageNum int unsigned default 0 comment '红包数量',
+    packageMoney int unsigned default 0 comment '红包金额',
+    timeoutType boolean default 0 comment '红包过期',
+    PRIMARY KEY(redID)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+/*redpackets send info table*/
+drop table if exists RedsenderInfo;
+create table RedsenderInfo
+(    
+    sendID bigint(20) AUTO_INCREMENT NOT NULL comment '发送id',
+    redID bigint(20) default  NULL comment '红包id',
+    senderID bigint(20) default null comment '发送者id',
+    packageNum int unsigned default 0 comment '红包数量',
+    packageMoney int unsigned default 0 comment '红包金额',
+    greetings varchar(20) default null comment '祝福语', 
+    bestLuckID bigint(20) default NULL comment '运气王',
+    sendTime DATETIME NOT NULL comment '发送时间',
+    PRIMARY KEY(sendID),
+    KEY red_id(redID),
+    CONSTRAINT red_id FOREIGN KEY (redID) REFERENCES ReduserInfo(redID),
+    KEY sender_id(senderID),
+    CONSTRAINT sender_id FOREIGN KEY (senderID) REFERENCES UserInfo(userID)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+/*redpackets recver info table*/
+drop table if exists RedrecverInfo;
+create table RedrecverInfo
+(
+    recvID bigint(20) AUTO_INCREMENT NOT NULL comment '接收id',
+    redID bigint(20) not NULL  comment '红包id',
+    receiverID bigint(20) not NULL comment '接收者id',
+    receiverTime DATETIME NOT NULL comment '接收时间',
+    PRIMARY KEY(recvID),
+    KEY redrecv_id(redID),
+    CONSTRAINT redrecv_id FOREIGN KEY (redID) REFERENCES ReduserInfo(redID),
+    KEY receiver_id(receiverID),
+    CONSTRAINT receiver_id FOREIGN KEY (receiverID) REFERENCES UserInfo(userID)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+/*user wallet info table*/
+drop table if exists UserWalletInfo;
+create table UserWalletInfo
+(
+    uw_id bigint(20)  AUTO_INCREMENT NOT NULL COMMENT '钱包id',
+    uw_UserID bigint(20) NOT NULL COMMENT '用户id',
+    uw_Money int unsigned not null comment '钱包余额',
+    uw_BankCard bigint(20) default null comment '银行卡id',
+    PRIMARY KEY(uw_id)
+)

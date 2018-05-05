@@ -1,0 +1,4 @@
+use test;
+drop table if exists testTable;
+create table testTable(name varchar(50), address varchar(50), timestamp timestamp, primary key(name));
+

@@ -1,6 +1,6 @@
-#include"dispatchertask.h"
-#include"common.h"
-#include"sysutil.h"
+#include"../bin/dispatchertask.h"
+#include"../bin/common.h"
+#include"../bin/sysutil.h"
 
 //epoll检测到事件处理函数
 /*处理薪连接的回调函数*/

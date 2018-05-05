@@ -1,5 +1,5 @@
-#include"strtool.h"
-#include"common.h"
+#include"../bin/strtool.h"
+#include"../bin/common.h"
 
 //去除\r\n
 void str_trim_crlf(char *str)

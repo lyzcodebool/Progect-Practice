@@ -10,7 +10,7 @@
 #include<time.h>
 #include<stdlib.h>
 #include<unistd.h>
-#include "thread_pool.h"
+#include "../bin/thread_pool.h"
 
 void *thread_routine(void *arg)
 {

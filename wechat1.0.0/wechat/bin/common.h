@@ -37,7 +37,7 @@
         exit(EXIT_FAILURE);  \
     }while(0)
 
-#define POOL_MAX_THREADS 1000
+#define POOL_MAX_THREADS 3
 #define MAX_EPOLL_SIZE 1024
 #define MAX_CLIENTS 1024
 #define BUFF_SIZE 1024
@@ -60,5 +60,13 @@ typedef char bool;
 #define FALSE 0
 
 int epollfd;
+
+/*消息体结构*/
+#define SIGNIN 2        //登录
+#define REGISTER 3      //注册
+#define CHATROOM 4      //群聊
+#define CHATSINGLE 5    //单聊
+#define REDBAGPUB 6     //红包发布
+
 
 #endif

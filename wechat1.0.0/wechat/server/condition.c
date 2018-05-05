@@ -5,7 +5,7 @@
 	> Created Time: Mon 19 Feb 2018 11:16:26 PM PST
  ************************************************************************/
 
-#include "condition.h"
+#include "../bin/condition.h"
 
 int condition_init(condition_t *cond)
 {
