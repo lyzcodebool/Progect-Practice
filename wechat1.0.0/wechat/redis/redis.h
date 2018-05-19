@@ -15,7 +15,7 @@ public:
         this->_reply = NULL;
     }
     
-    void redis_connect(const char *ip, int port, const int timeofout);
+    redisContext* redis_connect(const char *ip, int port, const int timeofout);
     std::string getkey(std::string key);
     void setkey(std::string key, std::string value);
     void redisServerInfo(redisContext *_connect);
@@ -24,7 +24,7 @@ private:
     redisReply *_reply;
 };
 
-void Redis::redis_connect(const char *ip, int port, const int timeofout)
+redisContext* Redis::redis_connect(const char *ip, int port, const int timeofout)
 {
     struct timeval timeout;
     timeout.tv_sec = timeofout;
@@ -35,6 +35,7 @@ void Redis::redis_connect(const char *ip, int port, const int timeofout)
     }
     std::cout<<"connect redis successful!"<<std::endl;
     Redis::redisServerInfo(_connect);
+    return this->_connect;
 }
 
 std::string Redis::getkey(std::string key)
