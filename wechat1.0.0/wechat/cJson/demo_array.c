@@ -37,7 +37,7 @@ void parseArray(char *pJson)
     int size = cJSON_GetArraySize(root);
     for(int i = 0; i < size; ++i){
         cJSON *pSub = cJSON_GetArrayItem(root, i);
-//        cJSON *ret = cJSON_GetObjectItem(root, "hehe");
+//      cJSON *ret = cJSON_GetObjectItem(root, "hehe");
         if(pSub == NULL){
             continue;
         }

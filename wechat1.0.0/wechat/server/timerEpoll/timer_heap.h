@@ -1,3 +1,6 @@
+#ifndef  _TIMER_HEAP_H_
+#define  _TIMER_HEAP_H_
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -62,7 +65,7 @@ int Insert_Heap(Heap_t *heap, int value)
         int i = size;
         int j = (i-1)/2;
         while(j >= 0 && i > 0){
-            if(heap->buffer[i] <= heap->buffer[j])
+            if(heap->buffer[i] >= heap->buffer[j])
                 break;
             else{
                 heap->buffer[i] = heap->buffer[j];
@@ -101,6 +104,32 @@ int Delete_Heap(Heap_t *heap)
             heap->buffer[parent] = heap->buffer[size];
     }
     heap->buffer[parent] = heap->buffer[child];
+    return 0;
+}
+
+int deleteh(Heap_t *heap)
+{
+    printf("detele!\n");
+    if(heap->size == 0){
+        printf("This Heap is Empty\n");
+        return 1;
+    }
+    heap->buffer[0] = heap->buffer[heap->size-1];
+    heap->size--;
+    int size = heap->size;
+    int parent  = 0;
+    int child = 1;
+    while(child + 1 <= size) 
+    {
+        if(heap->buffer[parent] <= heap->buffer[child] && heap->buffer[parent] <= heap->buffer[child + 1])
+            break;
+
+        if(heap->buffer[child] > heap->buffer[child+1])
+            child++;
+        swap(&heap->buffer[parent], &heap->buffer[child]);
+        parent = child;
+        child = 2*parent + 1;
+    }
     return 0;
 }
 
@@ -154,3 +183,4 @@ void Test_CallBack_Func(Timer_Ctl_t *timer_ctl)
 /*    sleep(1);*/
 /*}*/
 
+#endif
