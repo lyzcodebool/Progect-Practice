@@ -19,7 +19,6 @@ int main(int argc, char **argv)
     int read_index = 0;                 /*当前已经读取了多少用户数据*/
     int start_line = 0;                 /*行在buffer中的起始位置*/
 
-    CHECK_STATE checkstate = CHECK_STATE_REQUESTLINE;
     while(1)
     {
         data_read = read(conn, buf, sizeof(buf));
@@ -32,7 +31,7 @@ int main(int argc, char **argv)
 
         read_index += data_read;
         /*分析当前已经读取的所有用户数据*/
-        HTTP_CODE result = parse_content(buf, check_index, checkstate, read_index, start_line);
+        HTTP_CODE result = parse_content(buf, check_index, read_index, start_line);
         if(result == NO_REQUEST)
             continue;
         else if(result == GET_REQUEST){

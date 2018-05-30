@@ -22,29 +22,40 @@
     }while(0)
 
 struct sockaddr_in address;
+/*http协议格式*/
+/* GET/POST 用户指定的url(一般不带域名) HTTP协议版本 */
+/* 字段1名: 字段内容\r\n */
+/* 字段2名: 字段内容\r\n */
+/* 字段3名: 字段内容\r\n */
+/*     ... */
+/*     ... */
+/* 字段n名: 字段内容\r\n */
+/* \r\n */
+/* HTTP协议包体内容 */
 
 //主状态机的两种可能状态
-enum CHECK_STATE{
+typedef  enum CHECK_STATE{
     CHECK_STATE_REQUESTLINE = 0, //当前正在分析请求行
     CHECK_STATE_HEADER           //当前正在分析头部信息
-};
+}CHECK_STATE;
+CHECK_STATE checkstate = CHECK_STATE_REQUESTLINE;
 
 //从状态机的三种可能状态，即行的读取状态
-enum LINE_STATES{
+typedef  enum LINE_STATES{
     LINE_OK = 0,                 //读取到一个完整的行
     LINE_BAD,                    //行出错
     LINE_OPEN                    //行数据尚不完整
-};
+}LINE_STATES;
 
 //服务器处理http请求的结果
-enum HTTP_CODE{
+typedef  enum HTTP_CODE{
     NO_REQUEST,                  //请求的数据不完整，需要继续读取数据
     GET_REQUEST,                 //得到一个完整的客户请求
     BAD_REQUEST,                 //表示请求有语法错误
     FORBIDDEN_REQUEST,           //表示客户堆请求的资源没有访问权限
     INTERNAL_REQUEST,            //表示服务器内部错误
     CLOSE_CONNECTION             //客户端关闭连接
-};
+}HTTP_CODE;
 
 /*这里简化问题，不给客户端发送完整的应答报文，只是告知服务器处理请求的结果*/
 static const char *szret[] = {"I go a correct result...\n", "something wrong...\n"};
@@ -69,6 +80,7 @@ LINE_STATES parse_line(char *buf, int check_index,  int read_index)
                 //表示本次读取到一个完整的行
                 buf[check_index ++] = '\0';
                 buf[check_index ++] = '\0';
+                printf("prase line_ok....\n");
                 return LINE_OK;
             }else{
                 //说明出现语法错误
@@ -87,48 +99,62 @@ LINE_STATES parse_line(char *buf, int check_index,  int read_index)
 }
 
 //分析请求行
-HTTP_CODE parse_requestline(char *temp, CHECK_STATE checkstate)
+HTTP_CODE parse_requestline(char *temp)
 {
-    char *url = strpbrk(temp, "\t"); //检查temp中有没有"\t"
+    printf("start parse requestline...\n");
+    char *url = strpbrk(temp, " \t"); //检查temp中有没有"\t"
     //如果请求行中没有空白字符和"\t"字符，则http请求必有问题
-    if(!url){
+    if(url == NULL){
+        printf("url error...\n");
         return BAD_REQUEST;
     }
-    *url ++ = '\0';
+    *url++ = '\0';
     char *method = temp;
+    printf("method = %s....\n", method);
     if(strcasecmp(method, "GET") == 0) //仅支持GET方法,比较字符串是否相同，忽略大小写。
     {
         printf("The request method is GET\n");
     }else{
+        printf("parse requestline error...\n");
         return BAD_REQUEST;
     }
 
-    url += strspn(url, "\t");  //找到url第一个不是\t的位置，作用是跳过http请求行的第一个空格或者\t，解析http协议版本
-    char *version = strpbrk(url, "\t");
+    url += strspn(url, " \t");  //找到url第一个不是\t的位置，作用是跳过http请求行的第一个空格或者\t，解析http协议版本
+    printf("url = %s\n", url);
+    char *version = strpbrk(url, " \t");
     if(!version){
+        printf("version parse error\n");
         return BAD_REQUEST;
     }
     *version ++ = '\0';
-    version += strspn(version, "\t");
+    version += strspn(version, " \t");
+    printf("version = %s\n", version);
     /*仅支持HTTP/1.1*/
-    if(strcasecmp(version, "HTTP/1.1") != 0)
+    if(strcasecmp(version, "HTTP/1.1") != 0){
+        printf("version not sample...\n");
         return BAD_REQUEST;
+    }
+    printf("url = %s\n", url);
     /*检查url是否合法*/
-    if(strcasecmp(url, "http://") == 0){
-        url += 7;
+    if(strcasecmp(url, "http://baidu.com") == 0){
+        url += 6;
+        printf("                          url = %s\n", url);
         url = strchr(url, '/');
+        printf("                          url = %s\n", url);
     }
     if(!url || url[0] != '/')
         return BAD_REQUEST;
     printf("The request the url is: %s\n", url);
     /*http请求行分析完毕，状态转移到头部字段的分析*/
     checkstate = CHECK_STATE_HEADER;
+    printf("checkstate = %d\n", checkstate);
     return NO_REQUEST;
 }
 
 HTTP_CODE parse_headers(char *temp)
 {
     /*遇到一个空行，说明我们得到一个正确的http请求*/
+    printf("parse headers ...\n temp = %s\n", temp);
     if(temp[0] == '\0'){
         return GET_REQUEST;
     }else if(strncasecmp(temp, "Host:", 5) == 0){
@@ -144,13 +170,14 @@ HTTP_CODE parse_headers(char *temp)
 }
 
 //分析http请求的入口函数
-HTTP_CODE parse_content(char *buffer, int check_index, CHECK_STATE checkstate, int read_index, int start_line)
+HTTP_CODE parse_content(char *buffer, int check_index, int read_index, int start_line)
 {
     LINE_STATES linestatus = LINE_OK; //记录当前行的读取状态
     HTTP_CODE retcode = NO_REQUEST;    //记录http请求的处理结果
     /*主状态机， 用于从buffer中取出所有的完整的行*/
     while((linestatus = parse_line(buffer, check_index, read_index)) == LINE_OK){
         char *temp = buffer + start_line;   //start_line是行在buffer中的起始位置
+        printf("temp = %s...\n", temp);
         start_line = check_index;
 
         /*checkstate 记录主状态机当前的状态*/
@@ -158,13 +185,16 @@ HTTP_CODE parse_content(char *buffer, int check_index, CHECK_STATE checkstate, i
         {
             case CHECK_STATE_REQUESTLINE:               //第一个状态，分析请求行
                 {
-                    retcode = parse_requestline(temp, checkstate);
+                    printf("check state requestline\n");
+                    retcode = parse_requestline(temp);
+                    printf("checkstate = %d\n", checkstate);
                     if(retcode == BAD_REQUEST)
                         return  BAD_REQUEST;
                     break;
                 }
             case CHECK_STATE_HEADER:                     //第二个状态，分析头部字段
                 {
+                    printf("check state headers\n");
                     retcode = parse_headers(temp);
                     if(retcode == BAD_REQUEST)
                         return BAD_REQUEST;
