@@ -9,7 +9,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-
+/************************************88
+ * *************
+ * 最小堆堆头插法代码有bug，待修改*****
+ * *******************8
+ * *********************************/
 #define  HEAP_SIZE 10
 typedef  struct timerHead timerHead_t;
 typedef  struct heap heap_t;
@@ -70,8 +74,6 @@ BOOL  InsertHead(heap_t *heap, time_t value)
                 heap->buf[size] = heap->buf[j];
                 i = j;
                 j = (i-1)>1;
-   
-        
             }
 
         }
@@ -102,6 +104,7 @@ BOOL deleteHeapTop(heap_t *heap)
     int parent = 0;
     int child = 1;
     while(child + 1 <= size){
+        printf("1");
         if(heap->buf[parent] < heap->buf[child] && heap->buf[parent] > heap->buf[child+1]) 
             break;
         if(heap->buf[child] > heap->buf[child + 1]){
@@ -133,16 +136,17 @@ time_t parseExpirTime(timerHead_t timer, int delay)
    return timer.expire.tv_sec;
 }
 //启动定时器
-void EvTimerStart(timerHead_t timer, Fun callback, heap_t *heap, int delay)
+BOOL EvTimerStart(timerHead_t timer, Fun callback, heap_t *heap, int delay)
 {
     printf("1\n");
     struct timeval t_out;
     t_out.tv_sec = parseExpirTime(timer, delay);
     timer.func = callback;
     int ret = InsertHead(heap, t_out.tv_sec);
-    if(ret == FALSE){
-        usleep(1);
-    }
+    if(ret == FALSE)
+        return FALSE;
+    else 
+        return TRUE;
     /* return (void *)0; */
 }
 
