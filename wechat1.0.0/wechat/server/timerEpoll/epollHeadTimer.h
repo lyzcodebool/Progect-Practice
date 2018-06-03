@@ -11,8 +11,9 @@
 
 
 #define  HEAP_SIZE 10
-
-typedef  void (*Fun)(void *);
+typedef  struct timerHead timerHead_t;
+typedef  struct heap heap_t;
+typedef  void (*Fun)(timerHead_t *, heap_t *);
 
 void swap(int *number1, int *number2)
 {
@@ -28,7 +29,7 @@ typedef enum
 
 typedef struct timerHead{
     struct   timeval expire;           //超时时间
-    void     (*func)(void *);          //超时回调函数
+    Fun func;          //超时回调函数;
     void     *arg;                     //回调函数参数
 }timerHead_t;
 
@@ -47,16 +48,18 @@ typedef  struct heap{
 }heap_t;
 
 //插入数据到堆顶,我们采用最小堆
-BOOL  InsertHead(heap_t *heap, void *value)
+BOOL  InsertHead(heap_t *heap, time_t value)
 {
+    printf("insert the timeout\n");
     int size = heap->size;
     if(size == HEAP_SIZE){
         printf("timeheap cannot add more...\n");
         return FALSE;
-    }
 
+    }
     heap->size ++;
-    heap->buf[size] = *(time_t*)value;
+    heap->buf[size] = value;
+    
     if(size > 0){
         int i = size;
         int j = (i-1)>1;
@@ -67,9 +70,12 @@ BOOL  InsertHead(heap_t *heap, void *value)
                 heap->buf[size] = heap->buf[j];
                 i = j;
                 j = (i-1)>1;
+   
+        
             }
+
         }
-        heap->buf[i] = *(time_t *)value;
+        heap->buf[i] = value;
     }
     return TRUE;
 }
@@ -85,6 +91,7 @@ time_t getHeapTop(heap_t *heap)
 
 BOOL deleteHeapTop(heap_t *heap)
 {
+    printf("detele the top\n");
     if(heap->size == 0){
         printf("timer heap is empty...\n");
         return FALSE;
@@ -114,17 +121,52 @@ time_t getCurrTime()
 }
 
 //获取定时时间
-void parseExpirTime(timerHead_t timer, int delay, heap_t *heap)
+time_t parseExpirTime(timerHead_t timer, int delay)
 {
    gettimeofday(&timer.expire, NULL);
-   timer.expire.tv_usec += delay * 1000;
+   timer.expire.tv_usec += delay * 1000000;
    if(timer.expire.tv_usec >= 1000000){
        timer.expire.tv_sec += timer.expire.tv_usec/1000000; //秒数
        timer.expire.tv_usec %= 1000000;                     //微秒数,1微秒相当于百万分之一秒
    }
-    
-   InsertHead(heap, &timer.expire.tv_sec);
+
+   return timer.expire.tv_sec;
 }
+//启动定时器
+void EvTimerStart(timerHead_t timer, Fun callback, heap_t *heap, int delay)
+{
+    printf("1\n");
+    struct timeval t_out;
+    t_out.tv_sec = parseExpirTime(timer, delay);
+    timer.func = callback;
+    int ret = InsertHead(heap, t_out.tv_sec);
+    if(ret == FALSE){
+        usleep(1);
+    }
+    /* return (void *)0; */
+}
+
+//定时器回调函数
+void TimerCallBack(timerHead_t *timer, heap_t *heap)
+{
+    static int time_out;
+    printf("hello timer\n");
+    time_out += 1;
+    EvTimerStart(*timer, TimerCallBack, heap, time_out);
+}
+
+/* void *parseExpirTime(void *heap) */
+/* { */
+/*     heap_t *heap_a = (heap_t *)heap; */
+/*     timerHead_t timer; */
+/*     gettimeofday(&timer.expire, NULL); */
+/*     timer.expire.tv_usec += 5* 1000; */
+/*     if(timer.expire.tv_usec >= 1000000){ */
+/*         timer.expire.tv_sec += timer.expire.tv_usec/1000000; //秒数 */
+/*         timer.expire.tv_usec %= 1000000;                     //微秒数,1微秒相当于百万分之一秒 */
+/*     } */
+/*     return (void*)0; */
+/* } */
 
 void tick(heap_t *heap, int sockfd)
 {
@@ -155,9 +197,11 @@ int my_epoll_wait(/*int epollfd,  epoll_event *events, int max_event_num, */heap
         gettimeofday(&now_time, NULL);
         timer.expire.tv_sec = getHeapTop(heap);
         more_time.tv_sec = timer.expire.tv_sec - now_time.tv_sec;
-        if(more_time.tv_sec < 0){
-
+        if(more_time.tv_sec <= 0){
+            more_time.tv_usec += 1000000;
+            more_time.tv_sec--;
         }
+
 
                     
     }

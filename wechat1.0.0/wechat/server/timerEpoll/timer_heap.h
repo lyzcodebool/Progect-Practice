@@ -138,13 +138,11 @@ time_t Get_Current_Time()
 {
     return time(NULL);
 }
-
 /*获取定时时间*/
 time_t Parse_Expir_Time(int delay)
 {
     return time(NULL) + delay;
 }
-
 /*启动定时器*/
 void Ev_Timer_Start(int Timeout_s, cb_func cb, Timer_Ctl_t *timer_ctl)
 {
