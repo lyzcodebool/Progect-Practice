@@ -117,6 +117,27 @@ BOOL deleteHeapTop(heap_t *heap)
     return TRUE;
 }
 
+BOOL deleteHeap(heap_t *heap)
+{
+    if(heap->size == 0)
+        return FALSE;
+    int temp = heap->buf[heap->size - 1];
+    heap->size--;
+    if(heap->size == 0){
+        printf("heap empty\n");
+        return TRUE;
+    }
+    
+    int i = 0;
+    int j = 2*i + 1;
+    while(j <= heap->size-1)
+    {
+    }
+
+        
+}
+
+
 //获取当前时间
 time_t getCurrTime()
 {
