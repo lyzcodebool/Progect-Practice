@@ -1,5 +1,6 @@
 #include <stdio.h>
-#include <cJSON.h>
+#include <cjson/cJSON.h>
+#include <cjson/cJSON.c>
 #include <stdlib.h>
 
 /*构建cjson*/

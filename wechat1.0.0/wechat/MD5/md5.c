@@ -2,7 +2,13 @@
 #include "md5.h"
 #include <string.h>
 
+/* 1.填充N×512 + 448 位数不够的话在后面添加一个1无数0知道满足前面的条件。 */
+/* 2.用64位来表示需要加密的字符串的长度，添加在步骤1的末尾，这样满足（N+1）×512位的长度 */
+/* 3.进行四轮循环分别生成32位的数值 */
+/* 4.最后四个32位字符串组合在一起产生了一个128位的字符序列 */
+
 unsigned char PADDING[] = {
+
     0x80, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -44,6 +50,7 @@ void MD5Update(MD5_CTX *context,unsigned char *input,unsigned int inputlen)
     }  
     memcpy(&context->buf[index],&input[i],inputlen-i);  
 }
+
 
 void MD5Final(MD5_CTX *context,unsigned char digest[16])
 {
