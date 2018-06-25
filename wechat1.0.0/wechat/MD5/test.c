@@ -2,7 +2,7 @@
 
 int main(void)
 {
-    int a = 64; 
+    unsigned int a = 0; 
     a = a >> 3 & 0x3f;
 
 
