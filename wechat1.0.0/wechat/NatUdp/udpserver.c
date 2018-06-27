@@ -15,6 +15,9 @@
 //消息，同理A通过B打的洞发数据给B，这时候由于B可以接受A的消息，所以数据接收成功且在A
 //的映射中加入了B的信息，从而A与B可以跨服务器通信。实现p2p
 
+
+/* 由于已知的外网服务器S可能并没有AB客户端的映射关系，所以要先建立A与S 还有 B与S之间的映射，这样才能进行udp穿透。 */
+
 #define ERR_EXIT(m)\
     do{\
         perror(m);\
@@ -54,20 +57,21 @@ int main()
     {
         bzero(info, sizeof(clientInfo)*2);
         /* 接收两个心跳包并记录其与此链接的ip+port */
-        socklen_t addrlen = sizeof(sockaddr_in);
+        socklen_t addrlen = sizeof(struct sockaddr_in);
         recvfrom(sockfd, &ch, sizeof(ch), 0, (struct sockaddr *)&serveraddr, &addrlen);
         memcpy(&info[0].ip, &serveraddr.sin_addr, sizeof(struct in_addr));
         info[0].port = serveraddr.sin_port;
 
-        printf("%s \t%d creat link OK!\n", inet_ntoa(info[0].ip), ntohs(info[0].port));
+        printf("A client IP:%s \tPort:%d creat link OK!\n", inet_ntoa(info[0].ip), ntohs(info[0].port));
 
         recvfrom(sockfd, &ch, sizeof(ch), 0, (struct sockaddr *)&serveraddr, &addrlen);
         memcpy(&info[1].ip, &serveraddr.sin_addr, sizeof(struct in_addr));
         info[1].port = serveraddr.sin_port;
 
-        printf("%s \t%d creat link OK!\n", inet_ntoa(info[1].ip), ntohs(info[1].port));
+        printf("B client IP:%s \tPort:%d creat link OK!\n", inet_ntoa(info[1].ip), ntohs(info[1].port));
 
         /* 分别向两个客户端发送对方的外网ip+port */
+        printf("start informations translation...\n");
         serveraddr.sin_addr = info[0].ip;
         serveraddr.sin_port = info[0].port;
         sendto(sockfd, &info[1], sizeof(clientInfo), 0, (struct sockaddr *)&serveraddr, addrlen);
@@ -75,6 +79,7 @@ int main()
         serveraddr.sin_addr = info[1].ip;
         serveraddr.sin_port = info[1].port;
         sendto(sockfd, &info[0], sizeof(clientInfo), 0, (struct sockaddr *)&serveraddr, addrlen);
+        printf("send informations successful!\n");
     }
     return 0;
 }

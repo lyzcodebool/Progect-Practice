@@ -36,7 +36,8 @@ void echo_ser(int sockfd, struct sockaddr* addr, socklen_t *len)
 
         //接收A发来的数据
         bzero(buf, sizeof(buf));
-        recvfrom(sockfd, buf, strlen(buf), 0, addr, len);
+        printf("start recv A data...\n");
+        recvfrom(sockfd, buf, sizeof(buf)-1, 0, addr, len);
         printf("%s \n", buf);
         buf[strlen(buf)] = '\0';
         if(strcmp(buf, "exit") == 0)
@@ -54,24 +55,33 @@ int main()
     clientInfo info;
     socklen_t addrlen = sizeof(struct sockaddr_in);
     bzero(&info, sizeof(info));
-    struct sockaddr_in clientaddr;
+    struct sockaddr_in clientaddr, serveraddr;
+    /* 客户端自身的ip+port */
     memset(&clientaddr, 0, sizeof(clientaddr));
-    //实际情况下为一个已知的外网的服务器port
     clientaddr.sin_port = htons(8888);
-    //实际情况下为一个已知的外网的服务器ip,这里仅用本地ip填充
     clientaddr.sin_addr.s_addr = inet_addr("127.0.0.1");   
     clientaddr.sin_family = AF_INET;
 
+    /* 服务器的信息 */
+    memset(&clientaddr, 0, sizeof(clientaddr));
+    //实际情况下为一个已知的外网的服务器port
+    serveraddr.sin_port = htons(8888);
+    //实际情况下为一个已知的外网的服务器ip,这里仅用本地ip填充
+    serveraddr.sin_addr.s_addr = inet_addr("60.205.184.5");   
+    /* clientaddr.sin_addr.s_addr = inet_addr("127.0.0.1"); */   
+    serveraddr.sin_family = AF_INET;
+
     /* 向服务器S发送数据包 */
-    sendto(sockfd, &ch, sizeof(ch), 0, (struct sockaddr *)&clientaddr, sizeof(struct sockaddr_in));
+    sendto(sockfd, &ch, sizeof(ch), 0, (struct sockaddr *)&serveraddr, sizeof(struct sockaddr_in));
     /* 接收B的ip+port */
-    recvfrom(sockfd, &info, sizeof(clientInfo), 0, (struct sockaddr *)&clientaddr, &addrlen);
+    printf("send success\n");
+    recvfrom(sockfd, &info, sizeof(clientInfo), 0, (struct sockaddr *)&serveraddr, &addrlen);
     printf("IP: %s\tPort: %d\n", inet_ntoa(info.ip), ntohs(info.port));
 
-    clientaddr.sin_addr = info.ip;
-    clientaddr.sin_port = info.port;
+    serveraddr.sin_addr = info.ip;
+    serveraddr.sin_port = info.port;
 
-    echo_ser(sockfd, (struct sockaddr *)&clientaddr, &addrlen);
+    echo_ser(sockfd, (struct sockaddr *)&serveraddr, &addrlen);
 
     close(sockfd);
     return 0;

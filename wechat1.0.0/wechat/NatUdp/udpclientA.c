@@ -24,15 +24,17 @@ typedef struct{
 /* 用于udp打洞成功后两个客户端跨服务器通信 */
 void echo_ser(int sockfd, struct sockaddr* addr, socklen_t *len)
 {   
+    printf("start recv B data...\n");
     char buf[1024];
     while(1)
     {
         bzero(buf, sizeof(buf));
         //接收B发来的数据
-        recvfrom(sockfd, buf, strlen(buf), 0, addr, len);
+        recvfrom(sockfd, buf, sizeof(buf)-1, 0, addr, len);
         printf("%s \n", buf);
         //向B发送数据
-        sendto(sockfd, buf, strlen(buf), 0, addr, sizeof(struct sockaddr_in));
+        printf("send data to B ...\n");
+        sendto(sockfd, buf, sizeof(buf)-1, 0, addr, sizeof(struct sockaddr_in));
         buf[strlen(buf)] = '\0';
         if(strcmp(buf, "exit") == 0)
             break;
@@ -60,6 +62,7 @@ int main()
     /* 向服务器S发送数据包 */
     sendto(sockfd, &ch, sizeof(ch), 0, (struct sockaddr *)&clientaddr, sizeof(struct sockaddr_in));
     /* 接收B的ip+port */
+    printf("send success\n");
     recvfrom(sockfd, &info, sizeof(clientInfo), 0, (struct sockaddr *)&clientaddr, &addrlen);
     printf("IP: %s\tPort: %d\n", inet_ntoa(info.ip), ntohs(info.port));
 
