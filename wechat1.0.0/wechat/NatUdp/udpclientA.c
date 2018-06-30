@@ -68,7 +68,8 @@ int main()
 
     clientaddr.sin_addr = info.ip;
     clientaddr.sin_port = info.port;
-
+    
+    sendto(sockfd, &ch, sizeof(ch), 0, (struct sockaddr *)&clientaddr, sizeof(struct sockaddr_in));
     echo_ser(sockfd, (struct sockaddr *)&clientaddr, &addrlen);
 
     close(sockfd);

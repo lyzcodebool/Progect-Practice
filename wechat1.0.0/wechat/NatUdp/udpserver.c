@@ -35,7 +35,8 @@ int main()
     /* 一个客户端信息结构体数组，分别存放两个客户端的外网ip+port */
     clientInfo info[2];
     /* 作为心跳包需要接收的一个字节 */
-    char ch; 
+    /* char ch; */ 
+    char str[10] = {0};
 
     /* udp socket描述符 */
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -58,13 +59,15 @@ int main()
         bzero(info, sizeof(clientInfo)*2);
         /* 接收两个心跳包并记录其与此链接的ip+port */
         socklen_t addrlen = sizeof(struct sockaddr_in);
-        recvfrom(sockfd, &ch, sizeof(ch), 0, (struct sockaddr *)&serveraddr, &addrlen);
+        /* recvfrom(sockfd, &ch, sizeof(ch), 0, (struct sockaddr *)&serveraddr, &addrlen); */
+        recvfrom(sockfd, str, sizeof(str), 0, (struct sockaddr *)&serveraddr, &addrlen);
         memcpy(&info[0].ip, &serveraddr.sin_addr, sizeof(struct in_addr));
         info[0].port = serveraddr.sin_port;
 
         printf("A client IP:%s \tPort:%d creat link OK!\n", inet_ntoa(info[0].ip), ntohs(info[0].port));
 
-        recvfrom(sockfd, &ch, sizeof(ch), 0, (struct sockaddr *)&serveraddr, &addrlen);
+        /* recvfrom(sockfd, &ch, sizeof(ch), 0, (struct sockaddr *)&serveraddr, &addrlen); */
+        recvfrom(sockfd, str, sizeof(str), 0, (struct sockaddr *)&serveraddr, &addrlen);
         memcpy(&info[1].ip, &serveraddr.sin_addr, sizeof(struct in_addr));
         info[1].port = serveraddr.sin_port;
 

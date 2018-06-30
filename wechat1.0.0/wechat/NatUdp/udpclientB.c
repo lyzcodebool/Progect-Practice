@@ -52,20 +52,21 @@ int main()
         ERR_EXIT("SOCKET");
     //向服务器发送心跳包的一个字节的数据
     char ch = 'a';
+    /* char str[] = "abcdefgh"; */
     clientInfo info;
     socklen_t addrlen = sizeof(struct sockaddr_in);
     bzero(&info, sizeof(info));
     struct sockaddr_in clientaddr, serveraddr;
     /* 客户端自身的ip+port */
-    memset(&clientaddr, 0, sizeof(clientaddr));
-    clientaddr.sin_port = htons(8888);
-    clientaddr.sin_addr.s_addr = inet_addr("127.0.0.1");   
-    clientaddr.sin_family = AF_INET;
+    /* memset(&clientaddr, 0, sizeof(clientaddr)); */
+    /* clientaddr.sin_port = htons(8888); */
+    /* clientaddr.sin_addr.s_addr = inet_addr("127.0.0.1"); */   
+    /* clientaddr.sin_family = AF_INET; */
 
     /* 服务器的信息 */
     memset(&clientaddr, 0, sizeof(clientaddr));
     //实际情况下为一个已知的外网的服务器port
-    serveraddr.sin_port = htons(8888);
+    serveraddr.sin_port = htons(4399);
     //实际情况下为一个已知的外网的服务器ip,这里仅用本地ip填充
     serveraddr.sin_addr.s_addr = inet_addr("60.205.184.5");   
     /* clientaddr.sin_addr.s_addr = inet_addr("127.0.0.1"); */   
@@ -73,6 +74,7 @@ int main()
 
     /* 向服务器S发送数据包 */
     sendto(sockfd, &ch, sizeof(ch), 0, (struct sockaddr *)&serveraddr, sizeof(struct sockaddr_in));
+    /* sendto(sockfd, str, sizeof(str), 0, (struct sockaddr *)&serveraddr, sizeof(struct sockaddr_in)); */
     /* 接收B的ip+port */
     printf("send success\n");
     recvfrom(sockfd, &info, sizeof(clientInfo), 0, (struct sockaddr *)&serveraddr, &addrlen);
@@ -81,6 +83,7 @@ int main()
     serveraddr.sin_addr = info.ip;
     serveraddr.sin_port = info.port;
 
+    sendto(sockfd, &ch, sizeof(ch), 0, (struct sockaddr *)&serveraddr, sizeof(struct sockaddr_in));
     echo_ser(sockfd, (struct sockaddr *)&serveraddr, &addrlen);
 
     close(sockfd);
