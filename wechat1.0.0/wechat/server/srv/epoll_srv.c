@@ -13,9 +13,24 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <signal.h>
 
 #define MAXEPOLLSIZE 10000
 #define MAXLINE 10
+
+static void signal_handle(int signo)
+{
+    switch(signo)
+    {
+    case SIGTERM:
+        printf("SIGTERM HANDLE\n");
+        break;
+    default:
+        printf("other signals\n");
+        break;
+    }
+}
+
 int handle(int connfd);
 int setnonblocking(int sockfd)
 {
@@ -27,10 +42,11 @@ int setnonblocking(int sockfd)
 
 int main(int argc, char **argv)
 {
+    signal(SIGTERM, signal_handle);
     int  servPort = 6888;
-    int listenq = 1024;
+    int listenq = 3;
 
-    int listenfd, connfd, kdpfd, nfds, n, nread, curfds,acceptCount = 0;
+    int listenfd, connfd, kdpfd, nfds, n, curfds,acceptCount = 0;
     struct sockaddr_in servaddr, cliaddr;
     socklen_t socklen = sizeof(struct sockaddr_in);
     struct epoll_event ev;
@@ -70,6 +86,7 @@ int main(int argc, char **argv)
         perror("listen error");
         return -1;
     }
+    /* while(1){}  //用来检测listen的两个队列 */
     /* 创建 epoll 句柄，把监听 socket 加入到 epoll 集合里 */
     kdpfd = epoll_create(MAXEPOLLSIZE);
     //ev.events = EPOLLIN | EPOLLET;
