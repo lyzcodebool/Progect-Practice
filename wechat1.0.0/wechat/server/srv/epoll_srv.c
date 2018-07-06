@@ -15,8 +15,61 @@
 #include <string.h>
 #include <signal.h>
 
+typedef char Bool;
+#define true 1
+#define false 0
+
+//服务器测试代码
+/* epoll ET和LT模式在socket描述符阻塞和非阻塞情况下的区别 */
+
 #define MAXEPOLLSIZE 10000
 #define MAXLINE 10
+/* int setnonblocking(int sockfd) */
+/* { */
+/*     if (fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFD, 0)|O_NONBLOCK) == -1) { */
+/*         return -1; */
+/*     } */
+/*     return 0; */
+/* } */
+int setnonblocking(int sockfd)
+{
+    int old_option;
+    int new_option;
+
+    if( (old_option = fcntl(sockfd,F_GETFL,0)) < 0)  /* 获取文件描述符旧状态标志 */
+    {
+        perror("fcntl GETFL");
+    }
+    new_option =  old_option | O_NONBLOCK;   /* 设置非阻塞标志 */
+    if(fcntl(sockfd,F_SETFL,new_option) < 0)
+    {
+        perror("fcntl SETFL");
+    }
+
+    return old_option;  /* 返回旧文件描述符便于恢复先前状态 */
+}
+
+void addfd( int epollfd, int fd, Bool oneshot )
+{
+    struct epoll_event event;
+    event.data.fd = fd;
+    /* event.events = EPOLLIN | EPOLLET; */
+    if( oneshot )
+    {
+        event.events |= EPOLLONESHOT;
+    }
+    epoll_ctl( epollfd, EPOLL_CTL_ADD, fd, &event );
+    /* setnonblocking( fd ); */
+}
+
+void reset_oneshot( int epollfd, int fd )
+{
+    struct epoll_event event;
+    event.data.fd = fd;
+    event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
+    epoll_ctl( epollfd, EPOLL_CTL_MOD, fd, &event );
+}
+
 
 static void signal_handle(int signo)
 {
@@ -32,13 +85,7 @@ static void signal_handle(int signo)
 }
 
 int handle(int connfd);
-int setnonblocking(int sockfd)
-{
-    if (fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFD, 0)|O_NONBLOCK) == -1) {
-        return -1;
-    }
-    return 0;
-}
+int handle_block(int connfd, int epollfd);
 
 int main(int argc, char **argv)
 {
@@ -115,6 +162,7 @@ int main(int argc, char **argv)
                     perror("accept error");
                     continue;
                 }
+                /* addfd(kdpfd, connfd, true); */
 
                 sprintf(buf, "accept form %s:%d\n", inet_ntoa(cliaddr.sin_addr), cliaddr.sin_port);
                 printf("%d:%s", ++acceptCount, buf);
@@ -124,10 +172,11 @@ int main(int argc, char **argv)
                     close(connfd);
                     continue;
                 } 
-                if (setnonblocking(connfd) < 0){
-                    perror("setnonblocking error");
-                }
-                ev.events = EPOLLIN | EPOLLET;
+                /* 将连接socket设置为非阻塞 */
+                /* if (setnonblocking(connfd) < 0){ */
+                /*     perror("setnonblocking error"); */
+                /* } */
+                /* ev.events = EPOLLIN | EPOLLET;//采用ET边沿触发模式 */
                 ev.data.fd = connfd;
                 if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, connfd, &ev) < 0){
                     fprintf(stderr, "add socket '%d' to epoll failed: %s\n", connfd, strerror(errno));
@@ -137,7 +186,11 @@ int main(int argc, char **argv)
                 continue;
             } 
             // 处理客户端请求
-            if (handle(events[n].data.fd) < 0){
+            /* if (handle(events[n].data.fd) < 0){ */
+            /*     epoll_ctl(kdpfd, EPOLL_CTL_DEL, events[n].data.fd,&ev); */
+            /*     curfds--; */
+            /* } */
+            if (handle_block(events[n].data.fd, kdpfd) < 0){
                 epoll_ctl(kdpfd, EPOLL_CTL_DEL, events[n].data.fd,&ev);
                 curfds--;
             }
@@ -145,6 +198,34 @@ int main(int argc, char **argv)
     }
     close(listenfd);
     return 0;
+}
+int handle_block(int connfd, int epollfd)
+{
+    char buf[1024];
+    bzero(buf, sizeof(buf));
+    while(1)
+    {
+        int nread = read(connfd, buf, sizeof(buf));
+        if(nread == -1){
+            /* if(errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR){ */
+            /*     reset_oneshot(epollfd, connfd); */
+            /*     printf("read later"); */
+            /*     continue; */
+            /* }else */ 
+                return -1;
+        }
+
+        else if(nread == 0){
+            printf("client close!\n");
+            return -1;
+        }else{
+            buf[nread] = '\0';
+            printf("recv: %s \n", buf);
+            int nwrite = write(connfd, buf, sizeof(buf));
+            if(nwrite == -1)
+                return -1;
+        }
+    }
 }
 int handle(int connfd){
     int reRead = 1;
