@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include  <unistd.h>
 #include  <sys/types.h>       /* basic system data types */
 #include  <sys/socket.h>      /* basic socket definitions */
@@ -21,6 +19,11 @@ typedef char Bool;
 
 //服务器测试代码
 /* epoll ET和LT模式在socket描述符阻塞和非阻塞情况下的区别 */
+
+/* LT模式: */
+/* connfd采用默认状态（阻塞）使用最简单的回射程序，指出里第一个链接的消息，其他客户端的连接可以链接成功，但是阻塞在read调用上，因为采用的是while循环，而且read是阻塞的 */
+/* connfd采用非阻塞模式， */
+
 
 #define MAXEPOLLSIZE 10000
 #define MAXLINE 10
@@ -173,10 +176,10 @@ int main(int argc, char **argv)
                     continue;
                 } 
                 /* 将连接socket设置为非阻塞 */
-                /* if (setnonblocking(connfd) < 0){ */
-                /*     perror("setnonblocking error"); */
-                /* } */
-                /* ev.events = EPOLLIN | EPOLLET;//采用ET边沿触发模式 */
+                if (setnonblocking(connfd) < 0){
+                    perror("setnonblocking error");
+                }
+                ev.events = EPOLLIN | EPOLLET;//采用ET边沿触发模式
                 ev.data.fd = connfd;
                 if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, connfd, &ev) < 0){
                     fprintf(stderr, "add socket '%d' to epoll failed: %s\n", connfd, strerror(errno));
@@ -199,34 +202,41 @@ int main(int argc, char **argv)
     close(listenfd);
     return 0;
 }
-int handle_block(int connfd, int epollfd)
-{
-    char buf[1024];
-    bzero(buf, sizeof(buf));
-    while(1)
-    {
-        int nread = read(connfd, buf, sizeof(buf));
-        if(nread == -1){
-            /* if(errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR){ */
-            /*     reset_oneshot(epollfd, connfd); */
-            /*     printf("read later"); */
-            /*     continue; */
-            /* }else */ 
-                return -1;
-        }
+/* int handle_block(int connfd, int epollfd) */
+/* { */
+/*     char buf[1024]; */
+/*     bzero(buf, sizeof(buf)); */
+/*     while(1) */
+/*     { */
+/*         int nread = read(connfd, buf, sizeof(buf)); */
+/*         if(nread == -1){ */
+/*             if(errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR){ */
+/*                 /1* reset_oneshot(epollfd, connfd); *1/ */
+/*                 printf("read later"); */
+/*                 break; */
+/*             } */
+/*             else */ 
+/*             { */
+/*                 close(connfd); */
+/*                 return -1; */
+/*             } */
+/*         } */
 
-        else if(nread == 0){
-            printf("client close!\n");
-            return -1;
-        }else{
-            buf[nread] = '\0';
-            printf("recv: %s \n", buf);
-            int nwrite = write(connfd, buf, sizeof(buf));
-            if(nwrite == -1)
-                return -1;
-        }
-    }
-}
+/*         else if(nread == 0){ */
+/*             printf("client close!\n"); */
+/*             close(connfd); */
+/*             return -1; */
+/*         }else{ */
+/*             buf[nread] = '\0'; */
+/*             printf("recv: %s \n", buf); */
+/*             int nwrite = write(connfd, buf, sizeof(buf)); */
+/*             if(nwrite == -1) */
+/*                 return -1; */
+/*         } */
+/*     } */
+
+/*     return -1; */
+/* } */
 int handle(int connfd){
     int reRead = 1;
     while(reRead){
