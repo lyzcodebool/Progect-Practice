@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/select.h>
 #include <sys/time.h>
@@ -11,6 +12,32 @@
 #include <sys/epoll.h>
 #include <errno.h>
 #define OPEN_MAX 100
+
+
+/* epoll问题深入探究 */
+/* LT模式：阻塞和非阻塞 */
+/* 阻塞： 最简单的，跟select和poll相似*/
+/* 非阻塞： 与阻塞效果一样，区别就在于阻塞和非阻塞立即返回还是阻塞上面*/
+/* ET模式： */
+/* 阻塞： */
+/* 非阻塞： */
+int open_noblock(int sockfd)
+{
+    int old_option;
+    int new_option;
+
+    if( (old_option = fcntl(sockfd,F_GETFL,0)) < 0)  /* 获取文件描述符旧状态标志 */
+    {
+        perror("fcntl GETFL");
+    }
+    new_option =  old_option | O_NONBLOCK;   /* 设置非阻塞标志 */
+    if(fcntl(sockfd,F_SETFL,new_option) < 0)
+    {
+        perror("fcntl SETFL");
+    }
+
+    return old_option;  /* 返回旧文件描述符便于恢复先前状态 */
+}
  
 int main(int argc, char *argv[])
 {
@@ -19,7 +46,9 @@ int main(int argc, char *argv[])
 	
 	//1.创建tcp监听套接字
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    
 	
+    /* open_noblock(sockfd); */ 
 	//2.绑定sockfd
 	struct sockaddr_in my_addr;
 	bzero(&my_addr, sizeof(my_addr));
@@ -69,6 +98,7 @@ int main(int argc, char *argv[])
 			//6.1.1 从tcp完成连接中提取客户端
             socklen_t socklen = sizeof(struct sockaddr_in);
 			int connfd = accept(sockfd, (struct sockaddr *)&cli_addr, &socklen);
+            /* open_noblock(sockfd); */
 			
 			//6.1.2 将提取到的connfd放入fd数组中，以便下面轮询客户端套接字
 			for(i=1; i<OPEN_MAX; i++)
@@ -77,7 +107,7 @@ int main(int argc, char *argv[])
 				{
 					fd[i] = connfd;
 					event.data.fd = connfd; //监听套接字  
-					event.events = EPOLLIN; // 表示对应的文件描述符可以读
+					event.events = EPOLLIN|EPOLLET; // 表示对应的文件描述符可以读
 					
 					//6.1.3.事件注册函数，将监听套接字描述符 connfd 加入监听事件  
 					ret = epoll_ctl(epfd, EPOLL_CTL_ADD, connfd, &event);  
@@ -108,7 +138,8 @@ int main(int argc, char *argv[])
 			if(( fd[i] == wait_event.data.fd ) && ( EPOLLIN == (wait_event.events & (EPOLLIN|EPOLLERR) )))
 			{
 				int len = 0;
-				char buf[128] = "";
+				char buf[128];
+                bzero(buf, sizeof(buf));
 				
 				//6.2.1接受客户端数据
 				if((len = recv(fd[i], buf, sizeof(buf), 0)) < 0)
@@ -127,7 +158,10 @@ int main(int argc, char *argv[])
 					fd[i] = -1;
 				}
 				else//正常接收到服务器的数据
+                {
+                    printf("recv: %s\n", buf);
 					send(fd[i], buf, len, 0);
+                }
 				
 				//6.2.2所有的就绪描述符处理完了，就退出当前的for循环，继续poll监测
 				if(--ret <= 0)
