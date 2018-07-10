@@ -25,6 +25,7 @@ int main(void)
 
     int socketfd, connfd;
     int n = 0;
+    int port = 1011;
     while(n < 50000)
     {
     socketfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -32,15 +33,23 @@ int main(void)
         ERR_EXIT("SOCKET");
     struct ifreq ifr;
     memset(&ifr, 0x00, sizeof(ifr));
-    strncpy(ifr.ifr_name, "ens33:1", strlen("ens33:1"));
+    strncpy(ifr.ifr_name, "ens33:2", strlen("ens33:2"));
+    int on = 1;
     setsockopt(socketfd, SOL_SOCKET, SO_BINDTODEVICE, (char *)&ifr, sizeof(ifr));
+    setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on));
 
     printf("socketfd = %d\n", socketfd);
-    struct sockaddr_in serveraddr;
+    struct sockaddr_in serveraddr, cliaddr;
     memset(&serveraddr, 0, sizeof(serveraddr));
     serveraddr.sin_family = AF_INET;
     serveraddr.sin_addr.s_addr = inet_addr("127.0.0.1");
     serveraddr.sin_port = htons(6888);
+    /* memset(&serveraddr, 0, sizeof(serveraddr)); */
+    /* cliaddr.sin_family = AF_INET; */
+    /* cliaddr.sin_addr.s_addr = inet_addr("172.16.1.222"); */
+    /* cliaddr.sin_port = htons(port); */
+
+    /* bind(socketfd, (struct sockaddr*)&cliaddr, sizeof(struct sockaddr_in)); */
 
     //无限循环建立连接，不做数据处理，建立长连接
     int opt = 1;
@@ -53,7 +62,7 @@ int main(void)
         if(connfd < 0)
             ERR_EXIT("connfd");
         n++;
-
+        port++;
     }
     while(1){}
     close(socketfd);

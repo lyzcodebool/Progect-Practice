@@ -12,6 +12,7 @@
 #include <sys/epoll.h>
 #include <errno.h>
 #define OPEN_MAX 100
+#define MAXLINE 128
 
 
 /* epoll问题深入探究 */
@@ -48,7 +49,7 @@ int main(int argc, char *argv[])
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     
 	
-    /* open_noblock(sockfd); */ 
+    open_noblock(sockfd); 
 	//2.绑定sockfd
 	struct sockaddr_in my_addr;
 	bzero(&my_addr, sizeof(my_addr));
@@ -73,7 +74,7 @@ int main(int argc, char *argv[])
     }  
       
     event.data.fd = sockfd;     //监听套接字  
-    event.events = EPOLLIN; // 表示对应的文件描述符可以读
+    event.events = EPOLLIN|EPOLLET; // 表示对应的文件描述符可以读
 	
 	//5.事件注册函数，将监听套接字描述符 sockfd 加入监听事件  
     int ret = epoll_ctl(epfd, EPOLL_CTL_ADD, sockfd, &event);  
@@ -98,7 +99,7 @@ int main(int argc, char *argv[])
 			//6.1.1 从tcp完成连接中提取客户端
             socklen_t socklen = sizeof(struct sockaddr_in);
 			int connfd = accept(sockfd, (struct sockaddr *)&cli_addr, &socklen);
-            /* open_noblock(sockfd); */
+            open_noblock(sockfd);
 			
 			//6.1.2 将提取到的connfd放入fd数组中，以便下面轮询客户端套接字
 			for(i=1; i<OPEN_MAX; i++)
@@ -137,35 +138,90 @@ int main(int argc, char *argv[])
 			
 			if(( fd[i] == wait_event.data.fd ) && ( EPOLLIN == (wait_event.events & (EPOLLIN|EPOLLERR) )))
 			{
-				int len = 0;
-				char buf[128];
-                bzero(buf, sizeof(buf));
+    int reRead = 1;
+    while(reRead){
+        int nread;
+        char buf[MAXLINE];
+        nread = read(fd[i], buf, MAXLINE);//读取客户端socket流
+
+        if (nread == 0) {
+            printf("client close the connection\n");
+            close(fd[i]);
+            return -1;
+        }
+        else if (nread < 0) {
+            if(nread == EAGAIN)
+                break;
+            perror("read error");
+            close(fd[i]);
+        }else{
+            if(nread == MAXLINE){
+                write(STDOUT_FILENO, buf, nread);
+                write(fd[i], buf, nread+1);//响应客户端
+                reRead = 1;
+            }
+            else{
+                write(STDOUT_FILENO, buf, nread);
+                write(fd[i], buf, nread);//响应客户端
+                reRead = 0;
+            }
+        }
+    }
+				/* int len = 0; */
+				/* char buf[128]; */
+                /* bzero(buf, sizeof(buf)); */
 				
-				//6.2.1接受客户端数据
-				if((len = recv(fd[i], buf, sizeof(buf), 0)) < 0)
-				{
-					if(errno == ECONNRESET)//tcp连接超时、RST
-					{
-						close(fd[i]);
-						fd[i] = -1;
-					}
-					else
-						perror("read error:");
-				}
-				else if(len == 0)//客户端关闭连接
-				{
-					close(fd[i]);
-					fd[i] = -1;
-				}
-				else//正常接收到服务器的数据
-                {
-                    printf("recv: %s\n", buf);
-					send(fd[i], buf, len, 0);
-                }
+				/* //6.2.1接受客户端数据 */
+				/* if((len = recv(fd[i], buf, sizeof(buf), 0)) < 0) */
+				/* { */
+				/* 	if(errno == ECONNRESET)//tcp连接超时、RST */
+				/* 	{ */
+				/* 		close(fd[i]); */
+				/* 		fd[i] = -1; */
+				/* 	} */
+				/* 	else */
+				/* 		perror("read error:"); */
+				/* } */
+				/* else if(len == 0)//客户端关闭连接 */
+				/* { */
+				/* 	close(fd[i]); */
+				/* 	fd[i] = -1; */
+				/* } */
+				/* else//正常接收到服务器的数据 */
+                /* { */
+                    /* printf("recv: %s\n", buf); */
+				/* 	send(fd[i], buf, len, 0); */
+                /* } */
 				
-				//6.2.2所有的就绪描述符处理完了，就退出当前的for循环，继续poll监测
-				if(--ret <= 0)
-					break;
+				/* //6.2.2所有的就绪描述符处理完了，就退出当前的for循环，继续poll监测 */
+				/* if(--ret <= 0) */
+				/* 	break; */
+                /* while(1){ */
+                /*     char buf[MAXLINE]; */
+                /*     bzero(buf, sizeof(buf)); */
+                /*     while(1){ */
+                /*         int n = read(fd[i], buf, sizeof(buf)); */
+                /*         if(n == -1){ */
+                /*             if(errno == EAGAIN) */
+                /*                 break; */
+                /*             else */
+                /*             { */
+                /*                 close(fd[i]); */
+                /*             } */
+                /*         } */
+                /*         else if(n == 0){ */
+                /*             printf("client close\n"); */
+                /*             close(fd[i]); */
+                /*         } */
+                /*         else{ */
+                /*             buf[n] = '\0'; */
+                /*             printf("%s", buf); */
+                /*             write(fd[i], buf, sizeof(buf)); */
+                /*         } */
+                /*     } */
+
+
+                /* } */
 			}
 		}
 	}

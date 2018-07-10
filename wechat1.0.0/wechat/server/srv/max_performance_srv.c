@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <string.h>
 
+//用于测试单击服务器最大的连接数
+
 #define MAXEPOLLSIZE 65535
 #define MAXLINE 10
 int setnonblocking(int sockfd)
@@ -106,7 +108,6 @@ int main(void)
                 iCount++;
                 sprintf(buf, "accept form %s:%d\n", inet_ntoa(cliaddr.sin_addr), cliaddr.sin_port);
                 printf("%d:%s  %d", ++acceptCount, buf, iCount);
-                close(connfd);
                 continue;
                 } 
         }

@@ -17,23 +17,8 @@ typedef char Bool;
 #define true 1
 #define false 0
 
-//服务器测试代码
-/* epoll ET和LT模式在socket描述符阻塞和非阻塞情况下的区别 */
-
-/* LT模式: */
-/* connfd采用默认状态（阻塞）使用最简单的回射程序，指出里第一个链接的消息，其他客户端的连接可以链接成功，但是阻塞在read调用上，因为采用的是while循环，而且read是阻塞的 */
-/* connfd采用非阻塞模式， */
-
-
 #define MAXEPOLLSIZE 10000
 #define MAXLINE 10
-/* int setnonblocking(int sockfd) */
-/* { */
-/*     if (fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFD, 0)|O_NONBLOCK) == -1) { */
-/*         return -1; */
-/*     } */
-/*     return 0; */
-/* } */
 int setnonblocking(int sockfd)
 {
     int old_option;
@@ -56,13 +41,13 @@ void addfd( int epollfd, int fd, Bool oneshot )
 {
     struct epoll_event event;
     event.data.fd = fd;
-    /* event.events = EPOLLIN | EPOLLET; */
+    event.events = EPOLLIN | EPOLLET;
     if( oneshot )
     {
         event.events |= EPOLLONESHOT;
     }
     epoll_ctl( epollfd, EPOLL_CTL_ADD, fd, &event );
-    /* setnonblocking( fd ); */
+    setnonblocking( fd );
 }
 
 void reset_oneshot( int epollfd, int fd )
@@ -193,50 +178,15 @@ int main(int argc, char **argv)
             /*     epoll_ctl(kdpfd, EPOLL_CTL_DEL, events[n].data.fd,&ev); */
             /*     curfds--; */
             /* } */
-            if (handle_block(events[n].data.fd, kdpfd) < 0){
-                epoll_ctl(kdpfd, EPOLL_CTL_DEL, events[n].data.fd,&ev);
-                curfds--;
-            }
+            /* if (handle_block(events[n].data.fd, kdpfd) < 0){ */
+            /*     epoll_ctl(kdpfd, EPOLL_CTL_DEL, events[n].data.fd,&ev); */
+            /*     curfds--; */
+            /* } */
         }
     }
     close(listenfd);
     return 0;
 }
-/* int handle_block(int connfd, int epollfd) */
-/* { */
-/*     char buf[1024]; */
-/*     bzero(buf, sizeof(buf)); */
-/*     while(1) */
-/*     { */
-/*         int nread = read(connfd, buf, sizeof(buf)); */
-/*         if(nread == -1){ */
-/*             if(errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR){ */
-/*                 /1* reset_oneshot(epollfd, connfd); *1/ */
-/*                 printf("read later"); */
-/*                 break; */
-/*             } */
-/*             else */ 
-/*             { */
-/*                 close(connfd); */
-/*                 return -1; */
-/*             } */
-/*         } */
-
-/*         else if(nread == 0){ */
-/*             printf("client close!\n"); */
-/*             close(connfd); */
-/*             return -1; */
-/*         }else{ */
-/*             buf[nread] = '\0'; */
-/*             printf("recv: %s \n", buf); */
-/*             int nwrite = write(connfd, buf, sizeof(buf)); */
-/*             if(nwrite == -1) */
-/*                 return -1; */
-/*         } */
-/*     } */
-
-/*     return -1; */
-/* } */
 int handle(int connfd){
     int reRead = 1;
     while(reRead){
