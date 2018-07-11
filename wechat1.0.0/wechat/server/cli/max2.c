@@ -25,7 +25,7 @@ int main(void)
 
     int socketfd, connfd;
     int n = 0;
-    int port = 1011;
+    /* int port = 1011; */
     while(n < 50000)
     {
     socketfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -42,7 +42,7 @@ int main(void)
     struct sockaddr_in serveraddr, cliaddr;
     memset(&serveraddr, 0, sizeof(serveraddr));
     serveraddr.sin_family = AF_INET;
-    serveraddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    serveraddr.sin_addr.s_addr = inet_addr("192.168.189.139");
     serveraddr.sin_port = htons(6888);
     /* memset(&serveraddr, 0, sizeof(serveraddr)); */
     /* cliaddr.sin_family = AF_INET; */
@@ -62,7 +62,7 @@ int main(void)
         if(connfd < 0)
             ERR_EXIT("connfd");
         n++;
-        port++;
+        /* port++; */
     }
     while(1){}
     close(socketfd);

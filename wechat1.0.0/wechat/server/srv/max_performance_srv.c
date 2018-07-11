@@ -15,7 +15,7 @@
 
 //用于测试单击服务器最大的连接数
 
-#define MAXEPOLLSIZE 65535
+#define MAXEPOLLSIZE 655350
 #define MAXLINE 10
 int setnonblocking(int sockfd)
 {
@@ -48,7 +48,7 @@ int main(void)
     }
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin_family = AF_INET; 
-    servaddr.sin_addr.s_addr = htonl (INADDR_ANY);
+    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
     servaddr.sin_port = htons (servPort);
 
     listenfd = socket(AF_INET, SOCK_STREAM, 0); 
