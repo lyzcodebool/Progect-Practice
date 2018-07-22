@@ -10,7 +10,11 @@ ECONNREFUSED：请求链接的数量达到了监听队列的最大长度backlog�
 connect
 ------------------------------------
 ECONNREFUSED:目标端口不存在，连接被拒绝。
-ETIMEDOUT：连接超时。
+ETIMEDOUT：连接超时。 会尝试多次发送syn包  默认64s或者75秒
+EHOSTUNREACH和ENETUNREACH路由器不可达会返回icmp校验包标记路由不可达
+
+read/write
+------------------------------------------
 
 
 linux常用命令：
