@@ -27,6 +27,77 @@ ls  文件类型（目录d+普通文件—+字符文件c+socket文件s）+ 当�
 每命令都有可执行文件/bin/命令或者/sbin/命令    
 
 #########开机启动密码输入错误返回慢
+文件操作：
+ls
+lsof查看正在使用的文件
+cd
+mkdir
+rmdir
+touch
+rm -r-i-f
+cp
+mv
+du显示当前目录所占的磁盘空间 -h
+df显示目前磁盘剩余空间 -h
+cat
+tail -f 显示另一个进程日志文件的增长（实时）
+more
+less带搜索功能
+pwd
+clear
+grep查找文件中符合字符串的那行
+find
+chmod修改文件权限
+free
+fdisk-l显示磁盘信息
+
+进程操作：
+ps -aux|-ef
+pstree
+top
+htop
+iotop监控磁盘io
+nice通过给定的优先值启动一个进程
+renice -n -p pid设置进程的优先级
+kill -9
+killall -9
+pkill pid
+ulimit
+fg，bg后台运行，调到前台jobs列出所有当前进程
+ipcs进程通信设施状态
+strace
+pstack
+top -H -p
+pmap
+
+网络操作：
+---------网络参数配置
+ifconfig
+route
+ip
+--------网络侦错与观察
+ping
+traceroute
+netstat
+host
+IPTraf实时ip局域网监控
+-------远程联机
+telnet
+ftp
+-------网页浏览
+wget
+-------封包截取
+tcpdump
+nc模拟客户端服务器
+
+性能诊断：
+uptime
+dmesg|tail输出系统日志倒叙
+vmstat虚拟内存统计
+iostat
+sar -n DEV 1查看网络设备的吞吐率
+sar -n TCP,ETCP 1查看tcp连接状态
+
 
 
 netstat -nt|-u|-a (协议，recv-Q, send-Q, host:port, foreign:port 状态) 
@@ -36,16 +107,13 @@ ping
 host  
 arp 
 route 
-killpid 
+kill PID
 ifconfig
-
-
 ping .... telnet ....（远程主机的cpu跑满） 
 
 
 kill
-killpid
-kill all
+killall
 ps -ef
 strace 
 pkill(杀父进程)
@@ -56,11 +124,11 @@ top
 pstack
 pmap
 
-修改只读的数据
-访问受保护的地址，指针赋值0
-访问不存在的内存，null
-内存越界
-整数按照字符串方式打印（实际也是访问不存在内存或者受保护的内存）
+
+
+
+
+
 
 
 
